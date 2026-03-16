@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FH Password Generator by RzqIzhm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c10;
+            --fg: #e4eaf1;
+            --muted: #5a6a7a;
+            --accent: #00e5c7;
+            --accent-dim: #00b39e;
+            --card: #0f161c;
+            --border: #1c2833;
+            --success: #22c55e;
+            --error: #f43f5e;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Animated grid background */
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 229, 199, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 199, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .grid-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(0, 229, 199, 0.08) 0%, transparent 60%);
+        }
+        
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 15s infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { 
+                opacity: 0;
+                transform: translateY(100vh) scale(0);
+            }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { 
+                opacity: 0;
+                transform: translateY(-10vh) scale(1);
+            }
+        }
+        
+        /* Main card glass effect */
+        .main-card {
+            background: linear-gradient(165deg, rgba(15, 22, 28, 0.95) 0%, rgba(15, 22, 28, 0.8) 100%);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(0, 229, 199, 0.05) inset;
+        }
+        
+        /* Input styling */
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-prefix {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .text-input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            color: var(--fg);
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 
+                0 0 0 3px rgba(0, 229, 199, 0.1),
+                0 0 30px rgba(0, 229, 199, 0.1);
+        }
+        
+        .text-input::placeholder {
+            color: var(--muted);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+            color: var(--bg);
+            font-weight: 600;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 229, 199, 0.35);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--fg);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 229, 199, 0.05);
+        }
+        
+        .btn-secondary:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        
+        /* Output box */
+        .output-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .output-box.success {
+            border-color: var(--success);
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.15);
+        }
+        
+        .output-box.success::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), transparent);
+            pointer-events: none;
+        }
+        
+        .output-box.error {
+            border-color: var(--error);
+        }
+        
+        /* Mapping table */
+        .mapping-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .mapping-table td {
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .mapping-table tr:hover td {
+            background: rgba(0, 229, 199, 0.03);
+            border-color: rgba(0, 229, 199, 0.2);
+        }
+        
+        .mapping-table td:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+        
+        .mapping-table td:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+        
+        /* Entrance animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .delay-4 { animation-delay: 0.4s; opacity: 0; }
+        
+        .slide-down {
+            animation: slideDown 0.4s ease forwards;
+        }
+        
+        /* Status indicator */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 229, 199, 0.5); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(0, 229, 199, 0); }
+        }
+        
+        /* Copy animation */
+        @keyframes copySuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        
+        .copy-success {
+            animation: copySuccess 0.3s ease;
+        }
+        
+        /* Toggle panel animation */
+        .mapping-content {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mapping-content.open {
+            max-height: 500px;
+            opacity: 1;
+        }
+        
+        /* Focus visible */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .particle { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="grid-bg"></div>
+    <div class="particles" id="particles"></div>
+    
+    <main class="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
+        
+        <!-- Header -->
+        <header class="text-center mb-10 animate-in">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-5 tracking-tight leading-tight">
+                FH Password <span class="text-[var(--accent)]">Generator</span>
+            </h1>
+        </header>
+        
+        <!-- Main Card -->
+        <div class="main-card rounded-2xl p-6 sm:p-8 w-full max-w-lg animate-in delay-1">
+            
+            <!-- Input Section -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-[var(--fg)] mb-2.5 tracking-wide">
+                    SSID
+                </label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="inputField" 
+                        class="text-input w-full py-4 px-4 rounded-xl text-base"
+                        placeholder="fh_xxxxxx"
+                        autocomplete="off"
+                        spellcheck="false"
+                        aria-label="Masukkan SSID"
+                    >
+                </div>
+                <p class="text-xs text-[var(--muted)] mt-2 mono">Format valid: fh_[karakter alfanumerik]</p>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex gap-3 mb-6">
+                <button 
+                    id="generateBtn" 
+                    class="btn-primary flex-1 py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2.5 text-base"
+                    aria-label="Tombol Generate"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Generate
+                </button>
+                <button 
+                    id="copyBtn" 
+                    class="btn-secondary py-4 px-5 rounded-xl flex items-center justify-center gap-2"
+                    disabled
+                    aria-label="Tombol Copy"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span id="copyText">Copy</span>
+                </button>
+            </div>
+            
+            <!-- Output -->
+            <div>
+                <label class="block text-sm font-medium text-[var(--fg)] mb-2.5 tracking-wide">
+                    Password
+                </label>
+                <div 
+                    id="output" 
+                    class="output-box rounded-xl p-5 mono text-lg text-center min-h-[68px] flex items-center justify-center text-[var(--muted)]"
+                    role="status"
+                    aria-live="polite"
+                >
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mapping Reference Toggle -->
+        <div class="mt-6 w-full max-w-lg animate-in delay-2">
+            <button 
+                id="toggleMapping" 
+                class="w-full flex items-center justify-between py-3.5 px-5 rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/40 transition-all duration-300 text-[var(--muted)] hover:text-[var(--fg)] group"
+                aria-expanded="false"
+                aria-controls="mappingPanel"
+            >
+                <span class="flex items-center gap-2.5">
+                    <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="text-sm font-medium">Mapping Reference</span>
+                </span>
+                <svg id="toggleIcon" class="w-4 h-4 transition-transform duration-300 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            
+            <div id="mappingPanel" class="mapping-content mt-4">
+                <div class="p-5 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+                    <p class="text-sm text-[var(--muted)] mb-4">Setiap karakter dipetakan secara bilateral:</p>
+                    <table class="mapping-table w-full mono text-sm" role="table" aria-label="Mapping Reference">
+                        <tbody>
+                            <tr><td class="text-[var(--accent)] font-medium">a</td><td class="text-[var(--muted)] w-12">↔</td><td class="font-medium">5</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">b</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">4</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">c</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">3</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">d</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">2</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">e</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">1</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">f</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">0</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">6</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">9</td></tr>
+                            <tr><td class="text-[var(--accent)] font-medium">7</td><td class="text-[var(--muted)]">↔</td><td class="font-medium">8</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Example -->
+        <div class="mt-8 text-center animate-in delay-3">
+            <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-[var(--border)] bg-[var(--card)] mb-6">
+                <span class="status-dot"></span>
+                <span class="mono text-sm tracking-wide text-[var(--accent)]">by RzqIzhm</span>
+            </div>
+        </div>
+        
+    </main>
+    
+    <script>
+        // Initialize particles
+        (function initParticles() {
+            const container = document.getElementById('particles');
+            if (!container) return;
+            
+            const particleCount = 20;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        })();
+
+        // Mapping data
+        const pairs = [
+            ['a', '5'],
+            ['b', '4'],
+            ['c', '3'],
+            ['d', '2'],
+            ['e', '1'],
+            ['f', '0'],
+            ['6', '9'],
+            ['7', '8']
+        ];
+
+        const map = {};
+        for (const [k, v] of pairs) {
+            map[k] = v;
+            map[v] = k;
+        }
+
+        function generateSSID(input) {
+            if (!input || !input.startsWith('fh_')) return '';
+            const parts = input.split('_');
+            if (parts.length < 2) return '';
+            const middle = parts[1];
+            if (!middle) return '';
+
+            return 'wlan' + [...middle]
+                .map(c => map[c.toLowerCase()] ?? c)
+                .join('');
+        }
+
+        // DOM Elements
+        const inputField = document.getElementById('inputField');
+        const output = document.getElementById('output');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const copyText = document.getElementById('copyText');
+        const toggleMapping = document.getElementById('toggleMapping');
+        const mappingPanel = document.getElementById('mappingPanel');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        // Generate handler
+        function handleGenerate() {
+            const val = inputField.value.trim();
+            const result = generateSSID(val);
+
+            if (result) {
+                output.textContent = result;
+                output.className = 'output-box rounded-xl p-5 mono text-lg text-center min-h-[68px] flex items-center justify-center success text-[var(--success)]';
+                copyBtn.disabled = false;
+            } else {
+                output.textContent = 'Format tidak valid';
+                output.className = 'output-box rounded-xl p-5 mono text-lg text-center min-h-[68px] flex items-center justify-center error text-[var(--error)]';
+                copyBtn.disabled = true;
+            }
+            
+            copyText.textContent = 'Copy';
+        }
+
+        // Event listeners
+        generateBtn.addEventListener('click', handleGenerate);
+
+        copyBtn.addEventListener('click', async () => {
+            const text = output.textContent;
+            if (!text || text === 'Format tidak valid') return;
+            
+            try {
+                await navigator.clipboard.writeText(text);
+                copyText.textContent = '✔';
+                copyBtn.classList.add('copy-success');
+                
+                setTimeout(() => {
+                    copyText.textContent = 'Copy';
+                    copyBtn.classList.remove('copy-success');
+                }, 1500);
+            } catch (err) {
+                copyText.textContent = '✘';
+                setTimeout(() => copyText.textContent = 'Copy', 1500);
+            }
+        });
+
+        toggleMapping.addEventListener('click', () => {
+            const isOpen = mappingPanel.classList.contains('open');
+            mappingPanel.classList.toggle('open');
+            toggleIcon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            toggleMapping.setAttribute('aria-expanded', !isOpen);
+        });
+
+        // Focus input on load
+        setTimeout(() => inputField.focus(), 600);
+    </script>
+</body>
+</html>
